@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}New Order (POS){% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold text-gray-800 mb-6">Create New Order</h1>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- Left Panel: Menu Items -->
+    <div class="lg:col-span-2">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4">Menu</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {% for item in menu_items %}
+            <button 
+                class="bg-white p-4 rounded-lg shadow-md hover:shadow-lg hover:bg-blue-50 transition duration-200 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 menu-item-btn"
+                data-id="{{ item.id }}"
+                data-name="{{ item.name }}"
+                data-price="{{ item.price }}">
+                <h3 class="font-bold text-gray-800">{{ item.name }}</h3>
+                <p class="text-gray-600 text-sm">${{ "%.2f"|format(item.price) }}</p>
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Right Panel: Order Cart -->
+    <div class="lg:col-span-1">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4">Current Order</h2>
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <!-- Customer Info -->
+            <div class="mb-4">
+                <label for="customerPhone" class="block text-gray-700 font-bold mb-2">Customer Phone</label>
+                <input type="tel" id="customerPhone" class="w-full px-3 py-2 border rounded-lg" placeholder="Enter phone to find">
+                <input type="text" id="customerName" class="w-full px-3 py-2 border rounded-lg mt-2" placeholder="Customer Name" required>
+            </div>
+            
+            <!-- Order Type -->
+            <div class="mb-4">
+                <label class="block text-gray-700 font-bold mb-2">Order Type</label>
+                <select id="orderType" class="w-full px-3 py-2 border rounded-lg">
+                    <option value="dine-in">Dine-In</option>
+                    <option value="takeaway">Takeaway</option>
+                </select>
+            </div>
+
+            <!-- Order Items List -->
+            <div id="cart-items" class="mb-4 max-h-60 overflow-y-auto">
+                <!-- Cart items will be injected here by JS -->
+                <p class="text-gray-500 italic">No items added yet.</p>
+            </div>
+
+            <!-- Total -->
+            <div class="border-t pt-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-xl font-bold text-gray-800">Total</span>
+                    <span id="cart-total" class="text-2xl font-bold text-gray-900">$0.00</span>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="mt-6">
+                <button id="place-order-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow hover:bg-green-700 transition duration-300">
+                    Place Order
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const cart = {}; // { menu_id: { name, price, quantity } }
+        const menuButtons = document.querySelectorAll('.menu-item-btn');
+        const cartItemsContainer = document.getElementById('cart-items');
+        const cartTotalEl = document.getElementById('cart-total');
+        const placeOrderBtn = document.getElementById('place-order-btn');
+
+        menuButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.dataset.id;
+                const name = btn.dataset.name;
+                const price = parseFloat(btn.dataset.price);
+                addToCart(id, name, price);
+            });
+        });
+
+        function addToCart(id, name, price) {
+            if (cart[id]) {
+                cart[id].quantity++;
+            } else {
+                cart[id] = { name, price, quantity: 1 };
+            }
+            renderCart();
+        }
+
+        function removeFromCart(id) {
+            if (cart[id]) {
+                cart[id].quantity--;
+                if (cart[id].quantity <= 0) {
+                    delete cart[id];
+                }
+            }
+            renderCart();
+        }
+
+        function renderCart() {
+            if (Object.keys(cart).length === 0) {
+                cartItemsContainer.innerHTML = '<p class="text-gray-500 italic">No items added yet.</p>';
+                cartTotalEl.textContent = '$0.00';
+                return;
+            }
+
+            cartItemsContainer.innerHTML = '';
+            let total = 0;
+
+            for (const id in cart) {
+                const item = cart[id];
+                const subtotal = item.price * item.quantity;
+                total += subtotal;
+
+                const itemEl = document.createElement('div');
+                itemEl.className = 'flex justify-between items-center py-2 border-b';
+                itemEl.innerHTML = `
+                    <div>
+                        <p class="font-semibold">${item.name}</p>
+                        <p class="text-sm text-gray-600">$${item.price.toFixed(2)} x ${item.quantity}</p>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="font-semibold mr-2">$${subtotal.toFixed(2)}</span>
+                        <button class="text-red-500 hover:text-red-700 font-bold text-lg remove-item-btn" data-id="${id}">&times;</button>
+                    </div>
+                `;
+                cartItemsContainer.appendChild(itemEl);
+            }
+            
+            cartTotalEl.textContent = `$${total.toFixed(2)}`;
+            
+            // Add event listeners to new remove buttons
+            document.querySelectorAll('.remove-item-btn').forEach(btn => {
+                btn.onclick = () => removeFromCart(btn.dataset.id);
+            });
+        }
+        
+        placeOrderBtn.addEventListener('click', async () => {
+            const customerName = document.getElementById('customerName').value;
+            const customerPhone = document.getElementById('customerPhone').value;
+            const orderType = document.getElementById('orderType').value;
+            
+            if (!customerName || !customerPhone || Object.keys(cart).length === 0) {
+                alert('Please fill in customer details and add items to the order.');
+                return;
+            }
+
+            const orderData = {
+                customerName,
+                customerPhone,
+                orderType,
+                items: Object.keys(cart).map(id => ({
+                    id: id,
+                    quantity: cart[id].quantity
+                }))
+            };
+
+            try {
+                placeOrderBtn.disabled = true;
+                placeOrderBtn.textContent = 'Placing...';
+
+                const response = await fetch("{{ url_for('create_order') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(orderData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Redirect to the order detail page
+                    window.location.href = `/order/${result.order_id}`;
+                } else {
+                    alert('Error placing order. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            } finally {
+                placeOrderBtn.disabled = false;
+                placeOrderBtn.textContent = 'Place Order';
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitchen Display</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Simple style for KOT tickets */
+        .kot-ticket {
+            break-inside: avoid;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white p-4">
+    <h1 class="text-4xl font-bold text-center mb-6">Kitchen Order Display (Pending)</h1>
+    
+    <!-- KOT tickets container -->
+    <div id="kot-container" class="w-full columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-4">
+        <!-- KOT Tickets will be injected here by JS -->
+    </div>
+
+    <script>
+        const kotContainer = document.getElementById('kot-container');
+
+        async function fetchOrders() {
+            try {
+                const response = await fetch("{{ url_for('api_kitchen_orders') }}");
+                if (!response.ok) {
+                    console.error('Failed to fetch orders');
+                    return;
+                }
+                const orders = await response.json();
+                renderOrders(orders);
+            } catch (error) {
+                console.error('Error fetching orders:', error);
+            }
+        }
+
+        function renderOrders(orders) {
+            kotContainer.innerHTML = ''; // Clear existing orders
+            
+            if (orders.length === 0) {
+                kotContainer.innerHTML = '<p class="text-gray-400 text-lg text-center col-span-full">No pending orders.</p>';
+                return;
+            }
+
+            orders.forEach(order => {
+                const ticket = document.createElement('div');
+                ticket.className = 'bg-white text-gray-900 rounded-lg shadow-lg p-4 mb-4 kot-ticket';
+                
+                let itemsHtml = order.items.map(item => `
+                    <li class="flex justify-between text-lg">
+                        <span class="font-bold">${item.quantity}x</span>
+                        <span>${item.name}</span>
+                    </li>
+                `).join('');
+
+                ticket.innerHTML = `
+                    <div class="border-b-2 border-dashed border-gray-400 pb-2 mb-2">
+                        <h2 class="text-2xl font-bold">Order #${order.id}</h2>
+                        <p class="text-lg font-semibold text-blue-600">${order.order_type.title()}</p>
+                        <p class="text-sm text-gray-600">Time: ${order.created_at}</p>
+                    </div>
+                    <ul class="space-y-1 mb-4">
+                        ${itemsHtml}
+                    </ul>
+                    <button 
+                        class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow hover:bg-green-700 transition duration-300 kot-done-btn"
+                        data-order-id="${order.id}">
+                        Mark as Done
+                    </button>
+                `;
+                kotContainer.appendChild(ticket);
+            });
+            
+            // Add event listeners to "Done" buttons
+            document.querySelectorAll('.kot-done-btn').forEach(btn => {
+                btn.addEventListener('click', () => markOrderDone(btn.dataset.orderId, btn));
+            });
+        }
+
+        async function markOrderDone(orderId, buttonEl) {
+            try {
+                buttonEl.disabled = true;
+                buttonEl.textContent = 'Completing...';
+                
+                const response = await fetch(`/api/order/${orderId}/kitchen_done`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Remove the ticket from the UI
+                    buttonEl.closest('.kot-ticket').remove();
+                } else {
+                    alert(`Error completing order: ${result.message}`);
+                    buttonEl.disabled = false;
+                    buttonEl.textContent = 'Mark as Done';
+                }
+            } catch (error) {
+                console.error('Error marking order done:', error);
+                buttonEl.disabled = false;
+                buttonEl.textContent = 'Mark as Done';
+            }
+        }
+
+        // --- Initial Load and Auto-Refresh ---
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchOrders(); // Initial fetch
+            setInterval(fetchOrders, 10000); // Refresh every 10 seconds
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}All Orders{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-800">All Orders</h1>
+    <a href="{{ url_for('create_order') }}" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow hover:bg-blue-700 transition duration-300">
+        + New Order
+    </a>
+</div>
+
+<div class="bg-white shadow-lg rounded-lg overflow-hidden">
+    <table class="min-w-full leading-normal">
+        <thead class="bg-gray-200 text-gray-600">
+            <tr>
+                <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold uppercase tracking-wider">Order ID</th>
+                <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold uppercase tracking-wider">Customer</th>
+                <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold uppercase tracking-wider">Type</th>
+                <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold uppercase tracking-wider">Total</th>
+                <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold uppercase tracking-wider">Status</th>
+                <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold uppercase tracking-wider">Time</th>
+                <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold uppercase tracking-wider">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="text-gray-700">
+            {% for order in orders %}
+            <tr class="border-b border-gray-200 hover:bg-gray-100">
+                <td class="px-5 py-4 text-sm font-bold">#{{ order.id }}</td>
+                <td class="px-5 py-4 text-sm">{{ order.customer.name }}</td>
+                <td class="px-5 py-4 text-sm">{{ order.order_type.title() }}</td>
+                <td class="px-5 py-4 text-sm">${{ "%.2f"|format(order.total_bill) }}</td>
+                <td class="px-5 py-4 text-sm">
+                    {% if order.status == 'completed' %}
+                        <span class="px-2 py-1 font-semibold leading-tight text-green-700 bg-green-100 rounded-full">{{ order.status.title() }}</span>
+                    {% elif order.status == 'pending' %}
+                        <span class="px-2 py-1 font-semibold leading-tight text-yellow-700 bg-yellow-100 rounded-full">{{ order.status.title() }}</span>
+                    {% elif order.status == 'billed' %}
+                        <span class="px-2 py-1 font-semibold leading-tight text-blue-700 bg-blue-100 rounded-full">{{ order.status.title() }}</span>
+                    {% else %}
+                        <span class="px-2 py-1 font-semibold leading-tight text-gray-700 bg-gray-100 rounded-full">{{ order.status.title() }}</span>
+                    {% endif %}
+                </td>
+                <td class="px-5 py-4 text-sm">{{ order.created_at.strftime('%Y-%m-%d %I:%M %p') }}</td>
+                <td class="px-5 py-4 text-sm">
+                    <a href="{{ url_for('order_detail', order_id=order.id) }}" class="text-blue-600 hover:underline">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

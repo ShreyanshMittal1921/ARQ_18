@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Menu Management{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- Add New Item Form -->
+    <div class="lg:col-span-1">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Add Menu Item</h1>
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <form action="{{ url_for('menu_management') }}" method="POST">
+                <div class="mb-4">
+                    <label for="name" class="block text-gray-700 font-bold mb-2">Item Name</label>
+                    <input type="text" id="name" name="name" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="price" class="block text-gray-700 font-bold mb-2">Price</label>
+                    <input type="number" id="price" name="price" step="0.01" min="0" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="description" class="block text-gray-700 font-bold mb-2">Description</label>
+                    <textarea id="description" name="description" rows="3" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="is_available" class="form-checkbox h-5 w-5 text-blue-600" checked>
+                        <span class="ml-2 text-gray-700">Available</span>
+                    </label>
+                </div>
+                <div>
+                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow hover:bg-blue-700 transition duration-300">
+                        Add Item
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Menu List -->
+    <div class="lg:col-span-2">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Current Menu</h1>
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+            <table class="min-w-full leading-normal">
+                <thead class="bg-gray-200 text-gray-600">
+                    <tr>
+                        <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold uppercase tracking-wider">Name</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold uppercase tracking-wider">Price</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold uppercase tracking-wider">Description</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-300 text-left text-xs font-semibold uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-700">
+                    {% for item in menu_items %}
+                    <tr class="border-b border-gray-200 hover:bg-gray-100">
+                        <td class="px-5 py-4 text-sm">{{ item.name }}</td>
+                        <td class="px-5 py-4 text-sm">${{ "%.2f"|format(item.price) }}</td>
+                        <td class="px-5 py-4 text-sm">{{ item.description }}</td>
+                        <td class="px-5 py-4 text-sm">
+                            {% if item.is_available %}
+                                <span class="px-2 py-1 font-semibold leading-tight text-green-700 bg-green-100 rounded-full">Available</span>
+                            {% else %}
+                                <span class="px-2 py-1 font-semibold leading-tight text-red-700 bg-red-100 rounded-full">Not Available</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

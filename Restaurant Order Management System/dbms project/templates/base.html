@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Restaurant OMS{% endblock %}</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Simple style for KOT tickets */
+        .kot-ticket {
+            break-inside: avoid;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto px-6 py-3">
+            <div class="flex items-center justify-between">
+                <div>
+                    <a class="text-2xl font-bold text-gray-800" href="{{ url_for('index') }}">Restaurant OMS</a>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="{{ url_for('index') }}" class="text-gray-600 hover:text-blue-500">Dashboard</a>
+                    <a href="{{ url_for('create_order') }}" class="text-gray-600 hover:text-blue-500">New Order (POS)</a>
+                    <a href="{{ url_for('view_orders') }}" class="text-gray-600 hover:text-blue-500">All Orders</a>
+                    <a href="{{ url_for('menu_management') }}" class="text-gray-600 hover:text-blue-500">Menu</a>
+                    <a href="{{ url_for('kitchen_display') }}" class="text-gray-600 hover:text-blue-500" target="_blank">Kitchen Display</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-6 py-8">
+        {% block content %}{% endblock %}
+    </div>
+
+</body>
+</html>
